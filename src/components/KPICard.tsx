@@ -14,28 +14,19 @@ interface KPICardProps {
 
 export function KPICard({ title, value, icon: Icon, trend, description }: KPICardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <Icon className="h-5 w-5 text-primary" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold text-foreground">{value}</div>
-        {trend && (
-          <p
-            className={`text-xs mt-1 ${
-              trend.isPositive ? "text-success" : "text-destructive"
-            }`}
-          >
-            {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
-          </p>
-        )}
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-      </CardContent>
-    </Card>
+  <div className="bg-card text-card-foreground rounded-xl p-4 shadow-sm hover:shadow-md transition animate-fade-slide">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs text-gray-300 uppercase tracking-wide">{title}</div>
+          <div className="text-2xl md:text-3xl font-extrabold mt-2">{value}</div>
+          {description && <div className="text-sm text-gray-400 mt-1">{description}</div>}
+        </div>
+        <div className="flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
+            <Icon className="w-6 h-6 text-indigo-400" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

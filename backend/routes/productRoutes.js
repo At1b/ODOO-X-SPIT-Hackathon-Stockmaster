@@ -1,13 +1,2 @@
-const express = require('express');
-const router = express.Router();
-const productController = require('../controllers/productController');
-
-router.get('/', productController.getAllProducts);
-router.get('/:id', productController.getProductById);
-router.post('/', productController.createProduct);
-router.put('/:id', productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
-router.get('/:id/locations', productController.getProductLocations);
-router.get('/categories/list', productController.getCategories);
-
-module.exports = router;
+// Proxy to .cjs route (main implementation moved to productRoutes.cjs)
+module.exports = require('./productRoutes.cjs');

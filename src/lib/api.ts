@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -70,9 +70,15 @@ export const productsApi = {
       method: 'DELETE',
     }),
 
-  getLocations: (id: string) => apiRequest<any>(`/products/${id}/locations`),
+  getLocations: (id: string) => apiRequest<any>(`/products/${id}/stock`),
 
   getCategories: () => apiRequest<any>('/products/categories/list'),
+
+  generateSku: (payload: { name: string; category: string }) =>
+    apiRequest<any>('/products/generate-sku', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 // Locations API

@@ -14,6 +14,7 @@ import {
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { productsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -21,17 +22,16 @@ export default function AddProduct() {
   const [categories, setCategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: "",
-    category_id: "",
-    unit: "pcs",
+    category: "",
+    uom: "pcs",
     initial_stock: 0,
-    reorder_min: 0,
-    reorder_quantity: 0,
-    reorder_enabled: true,
+    low_stock_threshold: 0,
   });
   const [locations, setLocations] = useState<
     Array<{ location_id: string; quantity: number }>
   >([{ location_id: "", quantity: 0 }]);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string,string>>({});
 
   useEffect(() => {
     loadCategories();
@@ -50,28 +50,90 @@ export default function AddProduct() {
     }
   };
 
+  const [barcodePreview, setBarcodePreview] = useState<string | null>(null);
+  const [skuPreview, setSkuPreview] = useState<string | null>(null);
+  const debouncedName = useDebounce(formData.name, 500);
+  const debouncedCategory = useDebounce(formData.category, 500);
+
+  // call generate SKU endpoint whenever name or category (debounced) change
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!debouncedName || !debouncedCategory) {
+        setSkuPreview(null);
+        setBarcodePreview(null);
+        return;
+      }
+
+      try {
+        const res = await productsApi.generateSku({ name: debouncedName, category: debouncedCategory });
+        if (!active) return;
+        if (res && res.success && res.data) {
+          setSkuPreview(res.data.sku || null);
+          setBarcodePreview(res.data.barcode || null);
+        } else {
+          setSkuPreview(null);
+          setBarcodePreview(null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch generated SKU', err);
+        if (active) {
+          setSkuPreview(null);
+          setBarcodePreview(null);
+        }
+      }
+    };
+
+    load();
+    return () => { active = false; };
+  }, [debouncedName, debouncedCategory]);
+
+  // real-time validation
+  useEffect(() => {
+    const e: Record<string,string> = {};
+    if (!formData.name || formData.name.trim().length === 0) e.name = 'Product name is required';
+    if (!formData.category || formData.category.trim().length === 0) e.category = 'Category is required';
+    if (!formData.uom || formData.uom.trim().length === 0) e.uom = 'Unit is required';
+    if (!Number.isInteger(formData.initial_stock) || formData.initial_stock < 0) e.initial_stock = 'Initial stock must be a non-negative integer';
+    if (!Number.isInteger(formData.low_stock_threshold) || formData.low_stock_threshold < 0) e.low_stock_threshold = 'Low stock threshold must be a non-negative integer';
+    if (formData.initial_stock > 0 && formData.low_stock_threshold > formData.initial_stock) e.low_stock_threshold = 'Threshold should not exceed initial stock';
+    setErrors(e);
+  }, [formData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // validate final
+    if (Object.keys(errors).length > 0) {
+      toast({ title: 'Validation error', description: 'Fix the highlighted fields before submitting', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
-
     const productData = {
-      ...formData,
-      locations,
+      name: formData.name,
+      category: formData.category,
+      uom: formData.uom,
+      low_stock_threshold: formData.low_stock_threshold,
+      initial_stock: formData.initial_stock,
     };
 
     const response = await productsApi.create(productData);
     if (response.success) {
-      toast({
-        title: "Success",
-        description: "Product created successfully",
-      });
-      navigate("/products");
+      toast({ title: 'Success', description: 'Product created successfully' });
+      // show barcode & sku if returned
+      if (response.data && response.data.barcode) {
+        setBarcodePreview(response.data.barcode);
+      }
+      if (response.data && response.data.sku) {
+        setSkuPreview(response.data.sku);
+      }
+      // navigate to edit page for this product so the barcode will persist (Edit fetches product barcode)
+      const newId = response.data?.product_id;
+      setTimeout(() => {
+        if (newId) navigate(`/products/edit/${newId}`);
+        else navigate('/products');
+      }, 900);
     } else {
-      toast({
-        title: "Error",
-        description: response.error || "Failed to create product",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: response.error || 'Failed to create product', variant: 'destructive' });
     }
     setLoading(false);
   };
@@ -91,8 +153,8 @@ export default function AddProduct() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 max-w-4xl space-y-6">
+    <div className="min-h-screen bg-background w-full">
+      <div className="w-full p-4 md:p-6 lg:p-8 max-w-full space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button
@@ -110,56 +172,59 @@ export default function AddProduct() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+  <form onSubmit={handleSubmit} className="space-y-4">
           {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name">Product Name *</Label>
                 <Input
                   id="name"
+                  placeholder="e.g., Wireless Mouse"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  required
+                  aria-invalid={!!errors.name}
                 />
+                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="category">Category *</Label>
                   <Select
-                    value={formData.category_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, category_id: value })
-                    }
-                    required
-                  >
+                      value={formData.category}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, category: value })
+                      }
+                      required
+                    >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id.toString()}>
+                        <SelectItem key={cat.id} value={cat.name}>
                           {cat.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.category && <p className="text-sm text-red-500 mt-1">{errors.category}</p>}
                 </div>
 
                 <div>
                   <Label htmlFor="unit">Unit *</Label>
                   <Select
-                    value={formData.unit}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, unit: value })
-                    }
-                  >
+                      value={formData.uom}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, uom: value })
+                      }
+                    >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -175,19 +240,23 @@ export default function AddProduct() {
 
               <div>
                 <Label htmlFor="initial_stock">Initial Stock</Label>
-                <Input
-                  id="initial_stock"
-                  type="number"
-                  min="0"
-                  value={formData.initial_stock}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      initial_stock: parseInt(e.target.value) || 0,
-                    })
-                  }
-                />
+                <Input id="initial_stock" placeholder="0" type="number" min="0" value={formData.initial_stock} onChange={(e) => setFormData({ ...formData, initial_stock: parseInt(e.target.value) || 0 })} aria-invalid={!!errors.initial_stock} />
+                {errors.initial_stock && <p className="text-sm text-red-500 mt-1">{errors.initial_stock}</p>}
               </div>
+
+              <div>
+                <Label>SKU (preview)</Label>
+                <Input value={skuPreview || ''} placeholder="SKU will be generated" readOnly disabled className="font-mono" />
+              </div>
+
+              {barcodePreview && (
+                <div className="mt-4 md:col-span-2">
+                  <Label>Barcode Preview</Label>
+                  <div className="pt-2 bg-white p-4 rounded-md shadow-sm inline-block dark:bg-card">
+                    <img src={barcodePreview} alt="Barcode" />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -197,38 +266,23 @@ export default function AddProduct() {
               <CardTitle>Reordering Rules</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="reorder_min">Minimum Quantity</Label>
-                  <Input
-                    id="reorder_min"
-                    type="number"
-                    min="0"
-                    value={formData.reorder_min}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        reorder_min: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="reorder_quantity">Reorder Quantity</Label>
-                  <Input
-                    id="reorder_quantity"
-                    type="number"
-                    min="0"
-                    value={formData.reorder_quantity}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        reorder_quantity: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
+              <div>
+                <Label htmlFor="low_stock_threshold">Low Stock Threshold</Label>
+                <Input
+                  id="low_stock_threshold"
+                  placeholder="e.g., 10"
+                  type="number"
+                  min="0"
+                  value={formData.low_stock_threshold}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      low_stock_threshold: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  aria-invalid={!!errors.low_stock_threshold}
+                />
+                {errors.low_stock_threshold && <p className="text-sm text-red-500 mt-1">{errors.low_stock_threshold}</p>}
               </div>
             </CardContent>
           </Card>
@@ -244,7 +298,7 @@ export default function AddProduct() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               {locations.map((location, index) => (
                 <div key={index} className="flex gap-4 items-end">
                   <div className="flex-1">
@@ -288,7 +342,7 @@ export default function AddProduct() {
           </Card>
 
           {/* Actions */}
-          <div className="flex gap-4 justify-end">
+          <div className="flex gap-3 justify-end">
             <Button
               type="button"
               variant="outline"
