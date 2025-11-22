@@ -1,0 +1,56 @@
+-- StockMaster Operations Module Seed Data
+
+-- Insert warehouses
+INSERT INTO warehouses (id, name) VALUES
+  ('550e8400-e29b-41d4-a716-446655440001', 'Main Warehouse'),
+  ('550e8400-e29b-41d4-a716-446655440002', 'North Distribution Center'),
+  ('550e8400-e29b-41d4-a716-446655440003', 'South Distribution Center')
+ON CONFLICT DO NOTHING;
+
+-- Insert locations
+INSERT INTO locations (id, warehouse_id, name) VALUES
+  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'Zone A - Raw Materials'),
+  ('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', 'Zone B - Finished Goods'),
+  ('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', 'Zone C - Packaging'),
+  ('660e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440002', 'Storage Area 1'),
+  ('660e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440002', 'Storage Area 2'),
+  ('660e8400-e29b-41d4-a716-446655440006', '550e8400-e29b-41d4-a716-446655440003', 'Loading Dock'),
+  ('660e8400-e29b-41d4-a716-446655440007', '550e8400-e29b-41d4-a716-446655440003', 'Cold Storage')
+ON CONFLICT DO NOTHING;
+
+-- Insert products
+INSERT INTO products (id, name, sku, category, uom, total_stock) VALUES
+  ('770e8400-e29b-41d4-a716-446655440001', 'Steel Rod', 'STEEL-ROD-001', 'Raw Materials', 'pcs', 150),
+  ('770e8400-e29b-41d4-a716-446655440002', 'Aluminum Sheet', 'ALU-SHEET-002', 'Raw Materials', 'sqm', 50),
+  ('770e8400-e29b-41d4-a716-446655440003', 'Plastic Container', 'PLASTIC-CON-003', 'Packaging', 'pcs', 200),
+  ('770e8400-e29b-41d4-a716-446655440004', 'Wooden Pallet', 'WOOD-PALLET-004', 'Packaging', 'pcs', 75),
+  ('770e8400-e29b-41d4-a716-446655440005', 'Electronic Component A', 'ELEC-COMP-A-005', 'Electronics', 'pcs', 300),
+  ('770e8400-e29b-41d4-a716-446655440006', 'Electronic Component B', 'ELEC-COMP-B-006', 'Electronics', 'pcs', 250),
+  ('770e8400-e29b-41d4-a716-446655440007', 'Finished Product X', 'FIN-PROD-X-007', 'Finished Goods', 'pcs', 100),
+  ('770e8400-e29b-41d4-a716-446655440008', 'Finished Product Y', 'FIN-PROD-Y-008', 'Finished Goods', 'pcs', 80)
+ON CONFLICT DO NOTHING;
+
+-- Insert initial stock levels
+INSERT INTO stock_levels (product_id, location_id, quantity) VALUES
+  -- Main Warehouse - Zone A
+  ('770e8400-e29b-41d4-a716-446655440001', '660e8400-e29b-41d4-a716-446655440001', 100),
+  ('770e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440001', 30),
+  -- Main Warehouse - Zone B
+  ('770e8400-e29b-41d4-a716-446655440007', '660e8400-e29b-41d4-a716-446655440002', 60),
+  ('770e8400-e29b-41d4-a716-446655440008', '660e8400-e29b-41d4-a716-446655440002', 50),
+  -- Main Warehouse - Zone C
+  ('770e8400-e29b-41d4-a716-446655440003', '660e8400-e29b-41d4-a716-446655440003', 150),
+  ('770e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440003', 50),
+  -- North Distribution Center
+  ('770e8400-e29b-41d4-a716-446655440001', '660e8400-e29b-41d4-a716-446655440004', 30),
+  ('770e8400-e29b-41d4-a716-446655440005', '660e8400-e29b-41d4-a716-446655440004', 150),
+  ('770e8400-e29b-41d4-a716-446655440006', '660e8400-e29b-41d4-a716-446655440004', 100),
+  ('770e8400-e29b-41d4-a716-446655440007', '660e8400-e29b-41d4-a716-446655440005', 40),
+  -- South Distribution Center
+  ('770e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440006', 20),
+  ('770e8400-e29b-41d4-a716-446655440003', '660e8400-e29b-41d4-a716-446655440006', 50),
+  ('770e8400-e29b-41d4-a716-446655440005', '660e8400-e29b-41d4-a716-446655440007', 150),
+  ('770e8400-e29b-41d4-a716-446655440008', '660e8400-e29b-41d4-a716-446655440007', 30)
+ON CONFLICT (product_id, location_id) DO UPDATE SET quantity = EXCLUDED.quantity;
+
+
