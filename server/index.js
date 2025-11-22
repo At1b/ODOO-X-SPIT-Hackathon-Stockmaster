@@ -109,6 +109,52 @@ app.get('/stock', async (req, res) => {
     }
 });
 
+
+app.get('/dashboard-stats', async (req, res) => {
+    try {
+        // 1. Total Stock Value (Mock calculation: assuming quantity is value for now)
+        const [totalStock] = await db.query('SELECT SUM(quantity) as total FROM product_stock_levels');
+        
+        // 2. Activity Distribution (For Pie Chart: Receipts vs Deliveries vs Adjustments)
+        const [movements] = await db.query(`
+            SELECT movement_type as name, COUNT(*) as value 
+            FROM stock_ledger 
+            GROUP BY movement_type
+        `);
+
+        // 3. Loss Analysis (For Bar Chart: Why are we adjusting stock?)
+        const [reasons] = await db.query(`
+            SELECT reason as name, COUNT(*) as value 
+            FROM stock_adjustments 
+            GROUP BY reason
+        `);
+
+        // 4. Low Stock Alert Count
+        const [lowStock] = await db.query('SELECT COUNT(*) as count FROM products WHERE initial_stock < low_stock_threshold');
+        
+        // 5. Activity Trends (Line Chart: How busy were we each day?)
+        // DATE_FORMAT changes "2025-11-22 14:00:00" to just "Nov 22"
+        const [trends] = await db.query(`
+            SELECT DATE_FORMAT(created_at, '%b %d') as date, COUNT(*) as value 
+            FROM stock_ledger 
+            GROUP BY DATE_FORMAT(created_at, '%b %d') 
+            ORDER BY created_at ASC 
+            LIMIT 7
+        `);
+
+        res.json({
+            total_items: totalStock[0].total || 0,
+            low_stock_count: lowStock[0].count,
+            movement_stats: movements,
+            adjustment_reasons: reasons,
+            weekly_activity: trends
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
     console.log(`listening on port ${PORT}`);

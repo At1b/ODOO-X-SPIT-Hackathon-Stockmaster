@@ -74,31 +74,46 @@ function StockAudit() {
 
             <div style={{ display: 'flex', gap: '20px' }}>
                 
-                {/* --- LEFT: CURRENT INVENTORY (Click to Select) --- */}
+                {/* --- LEFT: CURRENT INVENTORY (SCROLLABLE) --- */}
                 <div style={{ flex: 1 }}>
                     <h3>Current Stock (Click to Fix)</h3>
-                    <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse', cursor: 'pointer' }}>
-                        <thead style={{ background: '#eee' }}>
-                            <tr>
-                                <th>ID</th>
-                                <th>Product</th>
-                                <th>Loc ID</th>
-                                <th>Location</th>
-                                <th>Qty</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {stockList.map((item) => (
-                                <tr key={`${item.product_id}-${item.location_id}`} onClick={() => fillForm(item)} title="Click to adjust this item">
-                                    <td>{item.product_id}</td>
-                                    <td>{item.product_name} <small>({item.sku})</small></td>
-                                    <td>{item.location_id}</td>
-                                    <td>{item.location_name} <small>({item.location_code})</small></td>
-                                    <td style={{ fontWeight: 'bold' }}>{item.quantity}</td>
+                    
+                    {/* The Scroll Wrapper */}
+                    <div style={{ 
+                        maxHeight: '400px',        // Matches the History table height
+                        overflowY: 'auto',         // Enables Scrollbar
+                        border: '1px solid #ccc',
+                        boxShadow: 'inset 0 0 5px rgba(0,0,0,0.1)'
+                    }}>
+                        <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse', cursor: 'pointer', border: 'none' }}>
+                            {/* Sticky Header */}
+                            <thead style={{ 
+                                position: 'sticky', 
+                                top: 0, 
+                                background: '#e0e0e0', // Solid color so rows don't show through
+                                zIndex: 1 
+                            }}>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product</th>
+                                    <th>Loc ID</th>
+                                    <th>Location</th>
+                                    <th>Qty</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {stockList.map((item) => (
+                                    <tr key={`${item.product_id}-${item.location_id}`} onClick={() => fillForm(item)} title="Click to adjust this item" style={{ background: 'white' }}>
+                                        <td>{item.product_id}</td>
+                                        <td>{item.product_name} <small>({item.sku})</small></td>
+                                        <td>{item.location_id}</td>
+                                        <td>{item.location_name} <small>({item.location_code})</small></td>
+                                        <td style={{ fontWeight: 'bold' }}>{Number(item.quantity)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 {/* --- RIGHT: ADJUSTMENT FORM --- */}
@@ -196,7 +211,7 @@ function StockAudit() {
                                 </td>
                                 <td>{row.product_name}</td>
                                 <td>{row.location_code}</td>
-                                <td>{row.qty_change > 0 ? `+${row.qty_change}` : row.qty_change}</td>
+                                <td>{row.qty_change > 0 ? `+${Number(row.qty_change)}` : Number(row.qty_change)}</td>
                             </tr>
                         ))}
                     </tbody>
