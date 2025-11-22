@@ -132,6 +132,8 @@ app.get('/dashboard-stats', async (req, res) => {
         // 4. Low Stock Alert Count
         const [lowStock] = await db.query('SELECT COUNT(*) as count FROM products WHERE initial_stock < low_stock_threshold');
         
+const [lowStockList] = await db.query('SELECT name, initial_stock FROM products WHERE initial_stock < low_stock_threshold LIMIT 5');
+
         // 5. Activity Trends (Line Chart: How busy were we each day?)
         // DATE_FORMAT changes "2025-11-22 14:00:00" to just "Nov 22"
         const [trends] = await db.query(`
@@ -145,6 +147,7 @@ app.get('/dashboard-stats', async (req, res) => {
         res.json({
             total_items: totalStock[0].total || 0,
             low_stock_count: lowStock[0].count,
+            low_stock_items: lowStockList,
             movement_stats: movements,
             adjustment_reasons: reasons,
             weekly_activity: trends
