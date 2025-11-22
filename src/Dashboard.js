@@ -196,7 +196,7 @@ function Dashboard() {
                     </div>
                 </div>
 
-                {/* --- 🔥 CRITICAL ALERTS SECTION --- */}
+                {/* --- CRITICAL ALERTS SECTION --- */}
                 {stats.low_stock_items.length > 0 && (
                     <div style={{ marginBottom: '30px' }}>
                         <h3 style={{ borderBottom: '1px solid #e74c3c', paddingBottom: '5px', marginBottom: '10px', color: '#c0392b' }}>⚠️ Critical Stock Warnings</h3>
