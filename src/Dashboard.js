@@ -72,7 +72,7 @@ function Dashboard() {
     return (
         <div style={{ padding: '20px', background: '#f4f6f8', minHeight: '100vh', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h1 style={{ color: '#333', margin: 0 }}>📊 Warehouse Analytics</h1>
+                <h1 style={{ color: '#333', margin: 0 }}>Warehouse Analytics</h1>
                 <button 
                     onClick={downloadPDF}
                     style={{
@@ -127,7 +127,7 @@ function Dashboard() {
                 </ResponsiveContainer>
             </div>
 
-            {/* --- 🕵️ HIDDEN REPORT TEMPLATE (Optimized for PDF) --- */}
+            {/* ---  HIDDEN REPORT TEMPLATE (Optimized for PDF) --- */}
             <div ref={reportRef} style={{ 
                 position: 'absolute', left: '-9999px', top: 0, width: '800px',
                 background: 'white', padding: '40px', fontFamily: 'Arial, sans-serif', color: '#333'
