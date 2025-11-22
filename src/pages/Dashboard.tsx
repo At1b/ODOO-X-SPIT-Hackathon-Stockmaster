@@ -1,14 +1,31 @@
-import { useEffect, useState } from "react";
-import { KPICard } from "@/components/KPICard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react';
+import { dashboardApi } from '@/lib/api';
+import { KPICard } from '@/components/KPICard';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Package,
   AlertTriangle,
   FolderTree,
   TrendingUp,
   ExternalLink,
-} from "lucide-react";
+  MapPin,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   BarChart,
   Bar,
@@ -20,254 +37,237 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-} from "recharts";
-import { dashboardApi } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-
-const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
+} from 'recharts';
 
 export default function Dashboard() {
-  const { toast } = useToast();
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    lowStockCount: 0,
-    categoriesCount: 0,
-    totalStock: 0,
+  const [stats, setStats] = useState<any>({
+    total_products: 0,
+    low_stock_count: 0,
+    total_categories: 0,
+    total_stock: 0,
+    stock_by_category: [],
+    stock_by_location: [],
+    recent_products: [],
   });
-
-  const [stockByCategory, setStockByCategory] = useState([
-    { name: "Electronics", stock: 120 },
-    { name: "Furniture", stock: 85 },
-    { name: "Office Supplies", stock: 210 },
-    { name: "Hardware", stock: 95 },
-  ]);
-
-  const [stockDistribution, setStockDistribution] = useState([
-    { name: "Normal Stock", value: 75 },
-    { name: "Low Stock", value: 25 },
-  ]);
-
-  const [stockTrend, setStockTrend] = useState([
-    { month: "Jan", stock: 400 },
-    { month: "Feb", stock: 380 },
-    { month: "Mar", stock: 420 },
-    { month: "Apr", stock: 450 },
-    { month: "May", stock: 480 },
-    { month: "Jun", stock: 510 },
-  ]);
-
-  const [recentProducts, setRecentProducts] = useState([
-    { id: 1, name: "Product A", sku: "SKU001", stock: 50, category: "Electronics" },
-    { id: 2, name: "Product B", sku: "SKU002", stock: 12, category: "Furniture" },
-    { id: 3, name: "Product C", sku: "SKU003", stock: 100, category: "Office Supplies" },
-  ]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardStats();
+    fetchStats();
   }, []);
 
-  const loadDashboardStats = async () => {
-    const response = await dashboardApi.getStats();
-    if (response.success && response.data) {
-      setStats(response.data);
-    } else {
-      // Using mock data when API is not available
-      setStats({
-        totalProducts: 145,
-        lowStockCount: 12,
-        categoriesCount: 8,
-        totalStock: 4250,
-      });
+  const fetchStats = async () => {
+    try {
+      const response = await dashboardApi.getStats();
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleNavigateToOperations = () => {
-    // Replace with actual Rutuja's dashboard URL
-    window.location.href = "https://operations-dashboard-url.com";
-  };
+  const lowStockData = [
+    { name: 'Low Stock', value: stats.low_stock_count, color: '#ef4444' },
+    {
+      name: 'Normal Stock',
+      value: stats.total_products - stats.low_stock_count,
+      color: '#10b981',
+    },
+  ];
+
+  const COLORS = ['#ef4444', '#10b981'];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Product Management Overview
-            </p>
-          </div>
-          <Button
-            onClick={handleNavigateToOperations}
-            className="gap-2"
-            variant="default"
-          >
-            Go to Operations Dashboard
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+    <div className="container mx-auto py-8 px-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Product Management Overview</p>
         </div>
+        <Button
+          onClick={() =>
+            (window.location.href = 'https://operations-dashboard-url.com')
+          }
+          className="gap-2"
+        >
+          Go to Operations Dashboard
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+      </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard
-            title="Total Products"
-            value={stats.totalProducts}
-            icon={Package}
-            description="Active products in inventory"
-          />
-          <KPICard
-            title="Low Stock Items"
-            value={stats.lowStockCount}
-            icon={AlertTriangle}
-            description="Requires attention"
-          />
-          <KPICard
-            title="Categories"
-            value={stats.categoriesCount}
-            icon={FolderTree}
-            description="Product categories"
-          />
-          <KPICard
-            title="Total Stock Units"
-            value={stats.totalStock}
-            icon={TrendingUp}
-            description="Across all locations"
-          />
-        </div>
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <KPICard
+          title="Total Products"
+          value={stats.total_products}
+          icon={Package}
+        />
+        <KPICard
+          title="Low Stock Items"
+          value={stats.low_stock_count}
+          icon={AlertTriangle}
+        />
+        <KPICard
+          title="Categories"
+          value={stats.total_categories}
+          icon={FolderTree}
+        />
+        <KPICard
+          title="Total Stock Units"
+          value={stats.total_stock}
+          icon={TrendingUp}
+        />
+      </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Stock by Category */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Stock by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stockByCategory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="stock" fill="hsl(var(--primary))" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Stock Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Stock Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={stockDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
-                    }
-                    outerRadius={100}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {stockDistribution.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stock Trend */}
-        <Card>
+      {/* Charts */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Stock Trend (Last 6 Months)</CardTitle>
+            <CardTitle>Stock by Category</CardTitle>
+            <CardDescription>Inventory distribution across categories</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stockTrend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="stock"
-                  stroke="hsl(var(--secondary))"
-                  strokeWidth={2}
+              <BarChart data={stats.stock_by_category}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="category" className="text-xs" />
+                <YAxis className="text-xs" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
                 />
-              </LineChart>
+                <Bar
+                  dataKey="total_stock"
+                  fill="hsl(var(--primary))"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Recent Products */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Stock Status</CardTitle>
+            <CardDescription>Health overview</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={lowStockData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) =>
+                    `${name}: ${(percent * 100).toFixed(0)}%`
+                  }
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {lowStockData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Stock by Location & Recent Products */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Stock by Location
+            </CardTitle>
+            <CardDescription>Inventory across warehouses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stats.stock_by_location} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis type="number" className="text-xs" />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  className="text-xs"
+                  width={100}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Bar
+                  dataKey="total_stock"
+                  fill="hsl(var(--chart-2))"
+                  radius={[0, 8, 8, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Recently Added Products</CardTitle>
+            <CardDescription>Latest additions to inventory</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                      Name
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                      SKU
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">
-                      Category
-                    </th>
-                    <th className="text-right py-3 px-4 font-medium text-muted-foreground">
-                      Stock
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentProducts.map((product) => (
-                    <tr key={product.id} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">{product.name}</td>
-                      <td className="py-3 px-4 font-mono text-sm">
-                        {product.sku}
-                      </td>
-                      <td className="py-3 px-4">{product.category}</td>
-                      <td className="py-3 px-4 text-right">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            product.stock < 20
-                              ? "bg-destructive/10 text-destructive"
-                              : "bg-success/10 text-success"
-                          }`}
-                        >
-                          {product.stock}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Stock</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.recent_products.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-muted-foreground"
+                    >
+                      No products yet
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  stats.recent_products.map((product: any) => (
+                    <TableRow key={product.product_id}>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{product.sku}</Badge>
+                      </TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell className="text-right">
+                        {product.total_stock}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

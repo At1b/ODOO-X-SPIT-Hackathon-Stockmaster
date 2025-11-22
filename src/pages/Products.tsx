@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Package, AlertTriangle, Edit, Trash2 } from "lucide-react";
-import { productsApi, categoriesApi } from "@/lib/api";
+import { productsApi } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,9 +36,9 @@ export default function Products() {
   }, [debouncedSearch, selectedCategory, currentPage]);
 
   const loadCategories = async () => {
-    const response = await categoriesApi.getAll();
+    const response = await productsApi.getCategories();
     if (response.success && response.data) {
-      setCategories(response.data);
+      setCategories(response.data.map((cat: string, idx: number) => ({ id: idx + 1, name: cat })));
     } else {
       // Mock data
       setCategories([

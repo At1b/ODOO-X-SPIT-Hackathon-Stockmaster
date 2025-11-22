@@ -70,32 +70,31 @@ export const productsApi = {
       method: 'DELETE',
     }),
 
-  getStock: (id: string) => apiRequest<any>(`/products/${id}/stock`),
+  getLocations: (id: string) => apiRequest<any>(`/products/${id}/locations`),
 
-  generateSKU: (id: string) =>
-    apiRequest<any>(`/products/${id}/generate-sku`, {
-      method: 'POST',
-    }),
+  getCategories: () => apiRequest<any>('/products/categories/list'),
 };
 
-// Categories API
-export const categoriesApi = {
-  getAll: () => apiRequest<any>('/categories'),
+// Locations API
+export const locationsApi = {
+  getAll: () => apiRequest<any>('/locations'),
 
-  create: (category: any) =>
-    apiRequest<any>('/categories', {
+  getById: (id: string) => apiRequest<any>(`/locations/${id}`),
+
+  create: (location: any) =>
+    apiRequest<any>('/locations', {
       method: 'POST',
-      body: JSON.stringify(category),
+      body: JSON.stringify(location),
     }),
 
-  update: (id: string, category: any) =>
-    apiRequest<any>(`/categories/${id}`, {
+  update: (id: string, location: any) =>
+    apiRequest<any>(`/locations/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(category),
+      body: JSON.stringify(location),
     }),
 
   delete: (id: string) =>
-    apiRequest<any>(`/categories/${id}`, {
+    apiRequest<any>(`/locations/${id}`, {
       method: 'DELETE',
     }),
 };
