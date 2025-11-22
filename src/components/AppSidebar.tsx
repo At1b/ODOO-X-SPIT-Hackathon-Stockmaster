@@ -1,5 +1,4 @@
-import { LayoutDashboard, Package, FolderTree, Settings } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
+import { Home, Package, Warehouse } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -10,53 +9,35 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
+import { NavLink } from '@/components/NavLink';
 
-const navItems = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Products",
-    url: "/products",
-    icon: Package,
-  },
-  {
-    title: "Categories",
-    url: "/categories",
-    icon: FolderTree,
-  },
+const items = [
+  { title: 'Dashboard', url: '/dashboard', icon: Home },
+  { title: 'Products', url: '/products', icon: Package },
 ];
 
 export function AppSidebar() {
   return (
-    <Sidebar className="border-r">
+    <Sidebar>
       <SidebarHeader className="border-b p-4">
         <div className="flex items-center gap-2">
-          <Package className="h-6 w-6 text-sidebar-primary" />
-          <span className="text-lg font-bold text-sidebar-foreground">
-            StockMaster
-          </span>
+          <Warehouse className="h-6 w-6 text-primary" />
+          <div>
+            <h2 className="text-lg font-semibold">Haniya</h2>
+            <p className="text-xs text-muted-foreground">Product Management</p>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">
-            Main Menu
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-                      activeClassName="bg-sidebar-accent font-medium"
-                    >
+                    <NavLink to={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>

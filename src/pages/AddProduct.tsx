@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { productsApi, categoriesApi } from "@/lib/api";
+import { productsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AddProduct() {
@@ -38,9 +38,9 @@ export default function AddProduct() {
   }, []);
 
   const loadCategories = async () => {
-    const response = await categoriesApi.getAll();
+    const response = await productsApi.getCategories();
     if (response.success && response.data) {
-      setCategories(response.data);
+      setCategories(response.data.map((cat: string, idx: number) => ({ id: idx + 1, name: cat })));
     } else {
       setCategories([
         { id: 1, name: "Electronics" },

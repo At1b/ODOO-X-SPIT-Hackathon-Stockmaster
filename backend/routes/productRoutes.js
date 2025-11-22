@@ -7,7 +7,7 @@ router.get('/:id', productController.getProductById);
 router.post('/', productController.createProduct);
 router.put('/:id', productController.updateProduct);
 router.delete('/:id', productController.deleteProduct);
-router.get('/:id/stock', productController.getProductStock);
-router.post('/:id/generate-sku', productController.generateProductSKU);
+router.get('/:id/locations', productController.getProductLocations);
+router.get('/categories/list', productController.getCategories);
 
 module.exports = router;
